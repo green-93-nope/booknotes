@@ -58,6 +58,7 @@ Translating objects among obstacles: Minkowski sum
 下面两种情况的连线可认为是可视边：
 + 连线对应于障碍物上的边
 + 连线存在于自由空间中
++ 在大型的可视图中产生的边的数量可能巨大。
 
 *** 优点
 可以解决多边形障碍物的情况。
