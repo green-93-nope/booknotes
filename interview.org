@@ -124,6 +124,41 @@ Parallel Scavenge 的老年代版本。
 + 如果两个对象的 hashCode 相等，其 equals 不一定判断相等。
 + 如果覆盖了 equals 方法，也需要覆盖对应的 hashCode 方法，否则散列表中将存在重复值。
 * Python
+** Python 和多线程
+Python中有一个被称为Global Interpreter Lock（GIL）的东西，它会确保任何时候你的多个线程中，只有一个被执行。
+
+Python并不支持真正意义上的多线程。Python中提供了多线程包，但是如果你想通过多线程提高代码的速度，使用多线程包并不是个好主意。
+*** GIL
++ GIL 的出现是为了解决多线程之间数据一致性和状态同步的问题。
++ 适合于 IO 密集型的问题
++ 可以通过多进程，核心部分用其他语言实现，改用其他解释器来实现
++ 多核多线程下，由于会产生线程颠簸效应（其它CPU上唤醒的线程又重新进入待调度状态）
+** 静态方法和类方法的区别
+*** 相同点
+都可以被类或成员所访问
+*** 不同点
++ 静态方法无法访问类变量和实例变量
++ 类方法可以访问类变量，但无法访问实例变量
++ 静态方法有点像函数库
++ 类方法有点像Java中的静态方法，可用做对于参数的重载
+** 迭代器和生成器
+*** 迭代器
+**** 迭代器协议
++ 迭代器协议：对象需要提供__next__方法和__iter__(返回自己）方法，它要么返回迭代的下一项，要么就引起一个 StopIteration 异常，以终止迭代。
++ 可迭代对象：实现了迭代器协议的对象。
++ 协议是一种约定，可迭代对象实现迭代器协议，Python 的内置工具（如for循环，sum,min,max函数等）使用迭代器协议访问对象。
+*** 生成器
+Python 使用生成器对延迟操作提供了支持。
+
+Python 有两种不同的方式提供生成器：
++ 生成器函数：yield（挂起）
++ 生成器表达式：类似于列表推导（使用圆括号）
+
+生成器的特点：
++ 语法上和函数类似
++ 自动实现迭代器协议
++ 状态挂起（yield挂起该生成器函数的状态，保留足够的信息，以便继续执行）
++ 只能遍历一次
 * 计算机系统
 ** 进程，线程与协程
 *** 进程与线程区别
@@ -357,6 +392,37 @@ HTTP-Version Status-Code Reason-Phrase CRLF
 在3NF的基础上消除了主属性对于码的部分与传递函数的依赖。
 
 (主属性/码 过多)
+** 数据库指令
+schema 是对一个数据库的结构性描述。
+其在一个关系型数据库中，定义了表，每个表的字段，还有表和字段之间的关系。
+*** DDL(Data Definition Language)
+数据定义语言：被用来定义数据框架和 schema，立即提交
++ CREATE
++ ALTER
++ DROP-删除整个表
++ TRUNCATE-清空表中数据
++ COMMENT
++ RENAME
+*** DML(Data Manipulation Language)
+数据操作语言：用来管理 schema 中对象的语言
++ SELECT
++ INSERT
++ UPDATE
++ DELETE-删除一个表中的数据，一般用于删除特定行
++ MERGE-insert or update
++ CALL-调用一个PL/SQL或者Java子程序
++ EXPLAIN PLAN
++ LOCK TABLE
+*** DCL(Data Control Language)
++ GRANT-授予用户访问数据库的权限
++ REVOKE-收回权限
+*** TCL(Transaction Control Language)
+事务控制语言用来管理数据操作语言带来的变动。
+它允许语句以逻辑事务的形式进行组合。
++ COMMIT
++ SAVEPOINT：使用保留点
++ ROLLBACK
++ SET TRANSACTION:改变事务选项（隔离等级，回退段）
 * 设计模式
 * 面试
 ** 应聘者提问
