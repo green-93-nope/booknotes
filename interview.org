@@ -135,6 +135,29 @@ Parallel Scavenge 的老年代版本。
 + 父类构造器
 + 子类成员字段和代码块
 + 子类构造器
+** hashmap 和 hashtable
+1.  关于HashMap的一些说法：
++ HashMap实际上是一个“链表散列”的数据结构，即数组和链表的结合体。HashMap的底层结构是一个数组，数组中的每一项是一条链表。
++ HashMap的实例有俩个参数影响其性能： “初始容量” 和 装填因子。
++ HashMap实现不同步，线程不安全。  HashTable线程安全
++ HashMap中的key-value都是存储在Entry中的。
++ HashMap可以存null键和null值，不保证元素的顺序恒久不变，它的底层使用的是数组和链表，通过hashCode()方法和equals方法保证键的唯一性
++ 解决冲突主要有三种方法：定址法，拉链法，再散列法。HashMap是采用拉链法解决哈希冲突的。
+注： 链表法是将相同hash值的对象组成一个链表放在hash值对应的槽位；
+   用开放定址法解决冲突的做法是：当冲突发生时，使用某种探查(亦称探测)技术在散列表中形成一个探查(测)序列。 沿此序列逐个单元地查找，直到找到给定 的关键字，或者碰到一个开放的地址(即该地址单元为空)为止（若要插入，在探查到开放的地址，则可将待插入的新结点存人该地址单元）。
+  拉链法解决冲突的做法是： 将所有关键字为同义词的结点链接在同一个单链表中 。若选定的散列表长度为m，则可将散列表定义为一个由m个头指针组成的指针数 组T[0..m-1]。凡是散列地址为i的结点，均插入到以T[i]为头指针的单链表中。T中各分量的初值均应为空指针。在拉链法中，装填因子α可以大于1，但一般均取α≤1。拉链法适合未规定元素的大小。
+
+2.  Hashtable和HashMap的区别：
++ 继承不同。 public class Hashtable extends Dictionary implements Map; public class HashMap extends  AbstractMap implements Map
++ Hashtable中的方法是同步的，而HashMap中的方法在缺省情况下是非同步的。在多线程并发的环境下，可以直接使用Hashtable，但是要使用HashMap的话就要自己增加同步处理了。
++ Hashtable 中， key 和 value 都不允许出现 null 值。 在 HashMap 中， null 可以作为键，这样的键只有一个；可以有一个或多个键所对应的值为 null 。当 get() 方法返回 null 值时，即可以表示 HashMap 中没有该键，也可以表示该键所对应的值为 null 。因此，在 HashMap 中不能由 get() 方法来判断 HashMap 中是否存在某个键， 而应该用 containsKey() 方法来判断。
++ 两个遍历方式的内部实现上不同。Hashtable、HashMap都使用了Iterator。而由于历史原因，Hashtable还使用了Enumeration的方式 。
++ 哈希值的使用不同，HashTable直接使用对象的hashCode。而HashMap重新计算hash值。
++ Hashtable和HashMap它们两个内部实现方式的数组的初始大小和扩容的方式。HashTable中hash数组默认大小是11，增加的方式是old*2+1。HashMap中hash数组的默认大小是16，而且一定是2的指数。
+
+注：  HashSet子类依靠hashCode()和equal()方法来区分重复元素。
+     HashSet内部使用Map保存数据，即将HashSet的数据作为Map的key值保存，这也是HashSet中元素不能重复的原因。而Map中保存key值的,会去判断当前Map中是否含有该Key对象，内部是先通过key的hashCode,确定有相同的hashCode之后，再通过equals方法判断是否相同。
+
 * Python
 ** Python 和多线程
 Python中有一个被称为Global Interpreter Lock（GIL）的东西，它会确保任何时候你的多个线程中，只有一个被执行。
@@ -232,6 +255,23 @@ P的数量可以通过GOMAXPROCS()来设置，其代表了真正的并发度，�
 + 共享内存：使得多个进程可以访问同一块内存空间，是最快的可用IPC形式。是针对其他通信机制运行效率较低而设计的。往往与其它通信机制，如信号量结合使用，来达到进程间的同步及互斥。
 + 信号量（semaphore）：主要作为进程间以及同一进程不同线程之间的同步手段。
 + 套接口（Socket）：更为一般的进程间通信机制，可用于不同机器之间的进程间通信。
+** 静态库和动态库
+1 静态链接库的优点 
++ 代码装载速度快，执行速度略比动态链接库快； 
++ 只需保证在开发者的计算机中有正确的.LIB文件，在以二进制形式发布程序时不需考虑在用户的计算机上.LIB文件是否存在及版本问题，可避免DLL地狱等问题。 
+
+2 动态链接库的优点 
++ 更加节省内存并减少页面交换；
++ DLL文件与EXE文件独立，只要输出接口不变（即名称、参数、返回值类型和调用约定不变），更换DLL文件不会对EXE文件造成任何影响，因而极大地提高了可维护性和可扩展性；
++ 不同编程语言编写的程序只要按照函数调用约定就可以调用同一个DLL函数；
++ 适用于大规模的软件开发，使开发过程独立、耦合度小，便于不同开发者和开发组织之间进行开发和测试。
+
+3 不足之处
+ + 使用静态链接生成的可执行文件体积较大，包含相同的公共代码，造成浪费；
+ + 使用动态链接库的应用程序不是自完备的，它依赖的DLL模块也要存在，如果使用载入时动态链接，程序启动时发现DLL不存在，系统将终止程序并给出错误信息。
+   而使用运行时动态链接，系统不会终止，但由于DLL中的导出函数不可用，程序会加载失败；速度比静态链接慢。
+   当某个模块更新后，如果新模块与旧的模块不兼容，那么那些需要该模块才能运行的软件，统统撕掉。这在早期Windows中很常见。
+
 * 计算机网络
 ** 网络 IO 模型
 网络应用需要处理的无非就是两大类问题，网络I/O，数据计算。相对于后者，网络I/O的延迟，给应用带来的性能瓶颈大于后者
@@ -722,6 +762,77 @@ Build模式的效果：
 *** 工厂方法
 *** 原型
 *** 单件
+**** 单价模式的几种写法
+***** 懒汉式
+#+BEGIN_SRC java
+  public class Singleton{
+      private Singleton static instance;
+      private Singleton(){}
+      public static synchronized Singleton getInstance() {
+          if (instance == null) {
+              instance = new Singleton();
+          }
+          return instance;
+      }
+  }
+#+END_SRC
+***** 双重检验锁
+#+BEGIN_SRC java
+  public class Singleton {
+      private volatile static Singleton instance; //声明成 volatile
+      private Singleton (){}
+      public static Singleton getSingleton() {
+          if (instance == null) {                         
+              synchronized (Singleton.class) {
+                  if (instance == null) {       
+                      instance = new Singleton();
+                  }
+              }
+          }
+          return instance;
+      }
+  }
+#+END_SRC
+
+这里 instance 必须声明为 volatile 来形成内存屏障，阻止指令重排序。
+对于语句 instance = new Singleton()。JVM 大概做三件事：
+#+BEGIN_EXAMPLE
+  1.给instance 分配内存
+  2.调用 Singleton 的构造函数来初始化成员变量
+  3.将 instance 对象指向分配的内存空间
+#+END_EXAMPLE
+
+经过 JVM 的即时编译器的指令重排序优化之后，最终的执行顺序可能为1-3-2。
+此时当3执行完而2未执行时，被另一线程抢占，这时 instance 已经是非 null 了，产生错误。
+***** 饿汉式
+#+BEGIN_SRC java
+  public class Singleton() {
+      private static final instance = new Singleton();
+      private Singleton() {}
+      public static Singleton getInstance(){
+          return instance;
+      }
+  }
+#+END_SRC
+***** 静态内部类
+#+BEGIN_SRC java
+  public class Singleton() {
+      private Singleton(){}
+      private static class SingletonHolder{
+          private static final Singleton INSTANCE = new Singleton();
+      }
+      public static Singleton getInstance(){
+          return SingletonHolder.INSTANCE;
+      }
+  }
+#+END_SRC
+
+***** 枚举 Enum
+#+BEGIN_SRC java
+  public enum Singleton{
+      INSTANCE;
+  }
+#+END_SRC
 ** 结构型模式
 *** 适配器模式
 将一个类的接口转换为客户希望的另一个接口。
