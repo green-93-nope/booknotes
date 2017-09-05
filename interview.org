@@ -157,7 +157,49 @@ Parallel Scavenge 的老年代版本。
 
 注：  HashSet子类依靠hashCode()和equal()方法来区分重复元素。
      HashSet内部使用Map保存数据，即将HashSet的数据作为Map的key值保存，这也是HashSet中元素不能重复的原因。而Map中保存key值的,会去判断当前Map中是否含有该Key对象，内部是先通过key的hashCode,确定有相同的hashCode之后，再通过equals方法判断是否相同。
-
+** Java多线程实现的方式
+*** 继承Thread类
++ Thread类本质上是实现了 Runnable 接口的一个实例。
++ 使用Thread类的start()实例方法启动新线程。
+*** 实现 Runnable 接口
+*** 实现 Callable 接口通过 FutureTask 包装器来创建 Thread 线程
+*** 使用 Executor 框架进行线程的创建及管理
+** 同步工具类
+*** 闭锁
++ CountDownLatch
++ 计数器
++ 可以延迟线程的进度直到到达终止状态
+*** FutureTask
++ Callable
++ 三个状态：等待运行、正在运行和运行完成
++ Future.get 的行为取决于任务的状态
++ 异步任务
+*** 信号量
++ acquire, release
++ 用来控制同时访问某个特定资源的操作数量
+*** 栅栏
++ 所有线程必须同时到达栅栏位置，才能继续执行。
++ 闭锁用于等待事件，而栅栏用于等待其他线程。
+** 线程池
+** 高级多线程控制类
+*** ThreadLocal 类
++ 保存线程的独立变量
++ 常用于用户登陆控制，如记录session信息
++ 实现：每个线程都持有一个 ThreadLocalMap 类型的变量
+*** 原子类
+*** Lock 类
++ lock 更加灵活
++ 可提供多种形式的锁方案：
+  + lock 阻塞式
+  + trylock 无阻塞式
+  + lockInterruptily 可打断式
++ ReentrantLock 可重入锁使得持有锁的线程可以继续持有
++ ReentrantReadWriteLock 可重入读写锁，适应于读远大于写的场合
+*** 容器类
++ BlockingQueue
++ ConcurrentHashMap
+*** 管理类
++ 线程池 ThreadPoolExecutor
 * Python
 ** Python 和多线程
 Python中有一个被称为Global Interpreter Lock（GIL）的东西，它会确保任何时候你的多个线程中，只有一个被执行。
@@ -195,6 +237,9 @@ Python 有两种不同的方式提供生成器：
 + 状态挂起（yield挂起该生成器函数的状态，保留足够的信息，以便继续执行）
 + 只能遍历一次
 * 计算机系统
+** 并发与并行
++ 并行：多个cpu实例或者多台机器同时执行一段处理逻辑，是真正的同时。
++ 并发：通过cpu调度算法，让用户看上去同时执行，实际上从cpu操作层面不是真正的同时。并发往往在场景中有公用的资源，那么针对这个公用的资源往往产生瓶颈，我们会用TPS或者QPS来反应这个系统的处理能力。
 ** 进程，线程与协程
 *** 进程与线程区别
 + 进程是资源分配的基本单位，线程是 CPU 调度/程序执行的最小单位。
