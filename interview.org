@@ -43,6 +43,66 @@
 *** finalize
 + finalize方法是一个protected方法，Object类的默认实现是不进行任何操作
 + 被垃圾回收器回收前触发
+** Error和Exception
+*** 联系
++ 继承结构:都是从 Throwable 继承
++ Error 和 RuntimeException 及其子类都是未检查异常(unchecked exception)，其他为受检查异常。
+*** 区别
++ Error 类一般指与虚拟机相关的问题，如系统崩溃，虚拟机错误，内存空间不足，方法调用栈溢出等。
++ Exception 类表示程序可以处理的异常，可以俘获且可能恢复。
+*** checked和unchecked
++ checked:通常是从一个可以恢复的程序中抛出来的，并且最好能够从这种异常使用中恢复。
++ unchecked:通常是如果一切正常的话，就不该发生的异常。
+** String类
+*** String, StringBuilder, StringBuffer
++ String:不可变对象
++ StringBuilder：可变，线程不安全，适用于单线程且值易变的场景
++ StringBuffer: 可变，线程安全，适用于多线程的场景
+*** 常见面试题
+#+BEGIN_SRC java
+  String s1 = "abc";
+  String s2 = "a" + "bc";
+  System.out.println(s1 == s2);
+#+END_SRC
+结果为true，java对s2进行了编译时期的常量优化。
+
+#+BEGIN_SRC java
+  String s1 = "ab";
+  String s2 = "abc";
+  String s3 = s1 + "c";
+  System.out.println(s3 == s2);
+#+END_SRC
+结果为false，变量s1与常量"c"相加，底层是通过StringBuilder的append和toString来完成的。
+对变量s1与变量s2的相加其等同于(new StringBuilder(String.valueOf(s1))).append(s2).toString();
+
+#+BEGIN_SRC java
+  String a = "hello2";
+  final String b = "hello";
+  String c = b + 2;
+  System.out.println(a == c);
+#+END_SRC
+结果为true，因为对于final修饰的变量，会在编译期被替换为真实的值。
+
+#+BEGIN_SRC java
+  String str = "abc";
+  str.concat("123");
+  System.out.println(str);
+#+END_SRC
+结果为"abc"，由于字符串是常量，该类中的所有方法都不会改变字符串的值。
+
+#+BEGIN_SRC java
+  String s = new String("abc");
+#+END_SRC
+该语句涉及两个对象，其首先在常量池中查找，
+之后再在内存的堆中创建s对象。
+
+#+BEGIN_SRC java
+  String s = new String("abc");
+  String s1 = "abc";
+  System.out.println(s == s.intern());
+  System.out.println(s1 == s.intern());
+#+END_SRC
+结果为false，true，intern()方法返回的是字符串对象的规范化形式，具体是对应的常量池中的对象。
 ** Java NIO
 *** 目的
 使用高速 IO 而无需编写自定义的本机代码。
@@ -803,9 +863,25 @@ schema 是对一个数据库的结构性描述。
 **** Durability 持久性
 事务结束后，事务处理的结果必须能够得到固化。
 ** 乐观锁和悲观锁
-乐观并发控制和悲观并发控制是并发控制主要采用的技术手段。
-+ 悲观锁：假定会发生并发冲突，屏蔽一切可能违反数据完整性的操作。
-+ 乐观锁：假定不会发生并发冲突，只在提交操作时检查是否违反数据完整性。
+*** 乐观锁
++ 假定不会发生并发冲突，只在提交操作时检查是否违反数据完整性。
++ 如果产生冲突的话，正在提交的事务会进行回滚。
++ 在实际中可使用版本号实现乐观锁。
++ 场景：发生冲突的概率比较低。
+*** 悲观锁
++ 假定会发生并发冲突，屏蔽一切可能违反数据完整性的操作。
++ 悲观锁适用于可靠的持续性连接，诸如C/S应用。对于Web应用的HTTP连接，并不适用。
++ 锁的使用意味着性能的损耗，在高并发、锁定持续时间长的情况下，尤其严重。
++ 非正常中止情况下的解锁机制，设计和实现较为麻烦。
++ 流程：
+  + 对任意记录进行修改前，先尝试对记录加上排他锁。
+  + 如果加锁失败，则等待或者抛出异常。
+  + 如果加锁成功，则可对记录修改，完成后解锁。
++ MySQL InnoDB:
+  + set autocommit=0;
+  + begin;/begin work;/start transaction;
+  + select ... from ... for update;
+  + commit;/commit work;
 ** 游标
 在检索出来的行中，前进或后退一行或多行。
 
