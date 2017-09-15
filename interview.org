@@ -32,9 +32,9 @@
 + 建议Object的所有子类都重写这个方法
 *** notify
 + 唤醒一个在此对象监视器上等待的锁
-+ 遵循 Java 监视器模式的对象会把对象的所有可它的主要功能是提供了一组和HashTable功能相同但是线程安全的方法变状态都封装起来，亿万并由对象自己的内置锁来保护
++ 遵循 Java 监视器模式的对象会把对象的所有可它的面试主要功能是提供了一组和HashTable功能相同但是线程安全的方法变状态都封装起来，亿万并由对象自己的内置锁来保护
 *** notifyAll
-+ 唤醒在此对象监视器上等待的所有线亿万程
++ 唤醒在此对象监视303和307是HTTP1.1新加的服务器响应文档的状态码，它们是对器上等待的所有线亿万程
 + notifyAll 和 notify 一样只能在拥有对象监视器的所有者线程中调用
 *** wait
 + wait方法会让当前线程等待直到另一个线程调用对象的 notify 或 notifyAll 方法，或者超时。
@@ -264,28 +264,185 @@ Parallel Scavenge 的老年代版本。
 + 父类构造器
 + 子类成员字段和代码块
 + 子类构造器
-** hashmap 和 hashtable
-1.  关于HashMap的一些说法：
+** 集合类
++ 集合类主要分为Collection和Map这两类
++ Iterator是遍历集合的迭代器(不能用来遍历Map,只能用来遍历Collection)
++ Arrays和Collections是用来操作数组，集合带两个工具类
+*** Collection
+**** List
++ list 中允许空元素的存在
+***** ArrayList
++ 数组结构
++ 线程不安全
++ 查询速度快
++ 增加，删除速度较慢
++ 支持序列化
++ 新容量=原容量×1.5+1
+****** 和 Array 比较
++ Array 可以容纳基本类型和对象，而 ArrayList 只能容纳对象
+***** LinkedList
++ 链表结构
++ 线程不安全
++ 查找速度慢，消耗更多内存
++ 增加、删除速度较快
+***** Vector
++ 数组结构
++ 线程安全
++ 已被 ArrayList 取代
++ 不支持序列化
++ 扩容与增长系数有关
++ 支持通过 Enumeration 遍历
+***** Stack
++ 栈，继承 Vector
+**** Set
++ 三个Set实现都是非线程安全的
++ 三个Set实现的迭代器返回均为Fail-fast迭代器
++ 速度方面：HashSet > LinkedHashSet > TreeSet
+***** HashSet
++ 元素存放顺序和添加进去的顺序没有关系
++ 按照哈希算法来存取集合中的对象，存取速度比较快
++ 最多包含一个null元素
++ 内部实现使用了 HashMap 对象
+***** LinkedHashSet
++ 保持元素的添加顺序
++ 以元素插入的顺序来维护集合的链接表
++ 内部实现使用了 HashSet 和 LinkedList
+***** TreeSet
++ 对Set中的元素进行排序存放
++ 内部实现使用了 TreeMap
+***** CopyOnWriteArraySet
++ 并发集合包
+**** Queue
++ Queue 接口继承自 Collection 接口，并对其进行了窄化
++ 简单的可以使用 LinkedList 来实现
+***** BlockingQueue
++ 在进行检索或移除一个元素时，它会等待队列变为非空
++ 在添加一个元素时，它会等待队列中有可用空间
++ 主要用于实现生产者-消费者模式
++ 有 ArrayBlockingQueue, LinkedBlockingQueue, PriorityBlockingQueue, SynchronousQueue 等
+***** ConcurrentLinkedQueue
+**** Iterator 和 Enumeration
+在 Java 集合中，我们通常使用迭代器和枚举类来遍历集合。
+
+#+BEGIN_SRC java
+  public interface Enumeration<E> {
+      boolean hasMoreElements();
+      E nextElement();
+  }
+#+END_SRC
+
+#+BEGIN_SRC java
+  public interface Iterator<E> {
+      boolean hasNext();
+      E next();
+      void remove();
+  }
+#+END_SRC
+
++ 函数接口不同，通过 Enumeration ，我们只能读取集合的数据，而不能对其进行修改。而 Iterator 能对其进行删除操作。
++ Iterator支持fail-fast机制，而 Enumeration 不支持该机制，也不支持同步，但在 Vector,Hashtable 中实现 Enumeration 时，添加了同步。
++ Enumeration 的速度是 Iterator 的两倍，且使用更少的内存。
+**** fail-fast机制
++ fail-fast机制是java集合中的一种错误机制。但多个线程对同一个集合的内容进行操作时，就可能会产生fail-fast事件。
++ 其通过检测 modCount 变量来判断集合在遍历过程中是否发生修改，如果是则抛出异常 java.util.ConcurrentModificationException 。
++ 迭代器的快速失败行为是无法得到保证的，因为一般来说，不可能对是否出现不同步并发修改做出任何硬性保证。
++ 为提高这类迭代器的正确性而编写一个以来于此异常的程序是错误的做法，其仅用于检测bug。
++ 在并发场景下，推荐使用线程安全的类，其采用的是 fail-safe 方式设计。
++ 在 Collection 中所有 Iterator 的实现都是按 fail-fast 来设计的。
+***** CopyOnWriteArrayList
+  + 任何对array结构上有所改变的操作，CopyOnWriteArrayList都会copy现有的数据，再在copy的数据上修改，完成后改变原有数据的引用。
+  + 这样造成的代价是产生大量的对象，同时数组的 copy 也是相当有损耗的。
+  + 其和 ArrayList 一样，都是实现了List接口，底层使用数组实现。
+**** Comparable 和 Comparator 接口
+***** Comparable 自然排序
+#+BEGIN_SRC java
+  public interface Comparable<T> {
+      public int compareTo(T o);
+  }
+#+END_SRC
+
++ Comparable 可以让它的类的对象进行比较，具体的比较规则是按照 compareTo 的方法中的规则进行，称为自然排序。
++ compareTo 方法的返回值：
+  + e1.compareTo(e2) > 0 即 e1 > e2
++ 需要注意 e.compareTo(null) 的情况，即使 e.equals(null) 返回 false，compareTo 方法也应该主动抛出一个空指针异常。
++ 一般要求 e1.compareTo(e2)==0 的结果要和 e1.equals(e2) 一致。这样将来使用 SortedSet 根据类的自然排序进行排序时的集合容器保存的数据的顺序和想象中一致。
++ compareTo 决定的是元素在排序中的位置是否相等，equals 决定的是元素是否相等，如果前者相等，那么后者也应相等。
+***** Comparator 定制排序
+#+BEGIN_SRC java
+  public interface Comparator<T> {
+      public int compare(T lhs, T rhs);
+      public boolean equals(Object object);
+  }
+#+END_SRC
+
++ 使用 Comparator 是在外部指定排序规则，然后作为排序策略参数传递给某些类
++ equals 方法可以不实现，因为任何类默认都是已经实现了 equals(Object obj) 的。
++ Comparable 是在实体类进行改变，而 Comparator 则是当无法修改实体类时，直接在调用方创建。
+**** 特殊集合
++ Collections.unmodifiableCollection(Collection c)
++ Collections.synchronizedCollection(Collection c)
+*** Map
++ Map 接口提供了三个集合视图：
+  + Set keyset()
+  + Collection values()
+  + Set<Map.Entry<K,V>> entrySet()
++ 对于内部类 Entry，其包含三个方法：
+  + Object getKey()
+  + Object getValue()
+  + Object setValue()
+**** hashmap 和 hashtable
+***** 关于HashMap的一些说法
 + HashMap实际上是一个“链表散列”的数据结构，即数组和链表的结合体。HashMap的底层结构是一个数组，数组中的每一项是一条链表。
 + HashMap的实例有俩个参数影响其性能： “初始容量” 和 装填因子。
 + HashMap实现不同步，线程不安全。  HashTable线程安全
 + HashMap中的key-value都是存储在Entry中的。
 + HashMap可以存null键和null值，不保证元素的顺序恒久不变，它的底层使用的是数组和链表，通过hashCode()方法和equals方法保证键的唯一性
 + 解决冲突主要有三种方法：定址法，拉链法，再散列法。HashMap是采用拉链法解决哈希冲突的。
+
 注： 链表法是将相同hash值的对象组成一个链表放在hash值对应的槽位；
    用开放定址法解决冲突的做法是：当冲突发生时，使用某种探查(亦称探测)技术在散列表中形成一个探查(测)序列。 沿此序列逐个单元地查找，直到找到给定 的关键字，或者碰到一个开放的地址(即该地址单元为空)为止（若要插入，在探查到开放的地址，则可将待插入的新结点存人该地址单元）。
   拉链法解决冲突的做法是： 将所有关键字为同义词的结点链接在同一个单链表中 。若选定的散列表长度为m，则可将散列表定义为一个由m个头指针组成的指针数 组T[0..m-1]。凡是散列地址为i的结点，均插入到以T[i]为头指针的单链表中。T中各分量的初值均应为空指针。在拉链法中，装填因子α可以大于1，但一般均取α≤1。拉链法适合未规定元素的大小。
-
-2.  Hashtable和HashMap的区别：
+***** Hashtable和HashMap的区别
 + 继承不同。 public class Hashtable extends Dictionary implements Map; public class HashMap extends  AbstractMap implements Map
 + Hashtable中的方法是同步的，而HashMap中的方法在缺省情况下是非同步的。在多线程并发的环境下，可以直接使用Hashtable，但是要使用HashMap的话就要自己增加同步处理了。
 + Hashtable 中， key 和 value 都不允许出现 null 值。 在 HashMap 中， null 可以作为键，这样的键只有一个；可以有一个或多个键所对应的值为 null 。当 get() 方法返回 null 值时，即可以表示 HashMap 中没有该键，也可以表示该键所对应的值为 null 。因此，在 HashMap 中不能由 get() 方法来判断 HashMap 中是否存在某个键， 而应该用 containsKey() 方法来判断。
 + 两个遍历方式的内部实现上不同。Hashtable、HashMap都使用了Iterator。而由于历史原因，Hashtable还使用了Enumeration的方式 。
++ HashMap 中的 Iterator 是 fail-fast 迭代器，而 HashTable 中的 Enumeration 不是。
 + 哈希值的使用不同，HashTable直接使用对象的hashCode。而HashMap重新计算hash值。
 + Hashtable和HashMap它们两个内部实现方式的数组的初始大小和扩容的方式。HashTable中hash数组默认大小是11，增加的方式是old*2+1。HashMap中hash数组的默认大小是16，而且一定是2的指数。
++ HashMap 不能保证随着时间的推移Map中的元素次序是不变的。
 
 注：  HashSet子类依靠hashCode()和equal()方法来区分重复元素。
      HashSet内部使用Map保存数据，即将HashSet的数据作为Map的key值保存，这也是HashSet中元素不能重复的原因。而Map中保存key值的,会去判断当前Map中是否含有该Key对象，内部是先通过key的hashCode,确定有相同的hashCode之后，再通过equals方法判断是否相同。
+***** 常见面试题
+****** HashMap 的 get() 方法的工作原理
++ 先对键调用 hashCode() 方法，返回的 hashcode 用来找到存储 Map.Entry 链表的 bucket 。
++ 接着使用 key.equals()方法来找到链表中正确的节点 ，来找到对象。
++ 使用基于 hash 的集合时，我们必须保证键的状态不变。
+****** 如果 HashMap 的大小超过了负载因子(load factor)定义的容量
++ 默认的负载因子为0.75
++ 当一个 map 填满了 75% 的bucket时，将会创建一个原来 HashMap 大小两倍的 bucket 数组
++ 并将原来的对象放入 bucket 数组中，这个过程叫 rehashing，因为它调用 hash 方法找到新的 bucket 位置。
+****** HashMap 中的竞争条件
+#+BEGIN_SRC java
+for (int j = 0; j < src.length; j++) {
+  Entry e = src[j];
+  if (e != null) {
+    src[j] = null;
+    do {
+    Entry next = e.next;
+ // Thread1 STOPS RIGHT HERE
+    int i = indexFor(e.hash, newCapacity);
+    e.next = newTable[i];
+    newTable[i] = e;
+    e = next;
+  } while (e != null);
+  }
+} 
+#+END_SRC
++ 线程1 停在所示点处
++ 线程2 完成 rehashing 步骤，添加的元素放在链表的头部
++ 此时会产生死循环
 ** Java多线程实现的方式
 *** 继承Thread类
 + Thread类本质上是实现了 Runnable 接口的一个实例。
@@ -720,9 +877,10 @@ HTTP-Version Status-Code Reason-Phrase CRLF
 + 3xx (重定向) 表示要完成请求，需要进一步操作。 通常，这些状态代码用来重定向。
 + 301 (永久移动) 请求的网页已永久移动到新位置。 服务器返回此响应(对 GET 或 HEAD 请求的响应)时，会自动将请求者转到新位置。
 + 302 (临时移动) 服务器目前从不同位置的网页响应请求，但请求者应继续使用原有位置来进行以后的请求。
-+ 303 (查看其他位置) 请求者应当对不同的位置使用单独的 GET 请求来检索响应时，服务器返回此代码。(包含的其他文件）
++ 303 (查看其他位置) 请求者应当对不同的位置使用单独的 GET 请求来检索响应时，服务器返回此代码。(包含的其他文件），对于 POST 请求，它表示请求已经被处理，可以使用 GET 方法继续访问资源。
 + 304 (未修改) 自从上次请求后，请求的网页未修改过。 服务器返回此响应时，不会返回网页内容。
-+ 307 (临时重定向) 服务器目前从不同位置的网页响应请求，但请求者应继续使用原有位置来进行以后的请求。
++ 307 (临时重定向) 服务器目前从不同位置的网页响应请求，但请求者应继续使用原有位置来进行以后的请求。对于 POST 请求，表示还没处理好，需要对新的 URI 重新发送POST请求。
++ 303 和 307 的存在，归根结底是由于 POST 方法的非幂等属性引起的。
 *** 4开头
 + 4xx(请求错误) 这些状态代码表示请求可能出错，妨碍了服务器的处理。
 + 400 (错误请求) 服务器不理解请求的语法。
