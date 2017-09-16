@@ -32,7 +32,7 @@
 + 建议Object的所有子类都重写这个方法
 *** notify
 + 唤醒一个在此对象监视器上等待的锁
-+ 遵循 Java 监视器模式的对象会把对象的所有可它的面试主要功能是提供了一组和HashTable功能相同但是线程安全的方法变状态都封装起来，亿万并由对象自己的内置锁来保护
++ 遵循 Java 监视器模式的对象会而且String最为常用。因为String是不可变的，也是final把对象的所有可它的面试主要功能是提供了一组和HashTable功能相同但是线程安全的方法变状态都封装起来，亿万并由对象自己的内置锁来保护
 *** notifyAll
 + 唤醒在此对象监视303和307是HTTP1.1新加的服务器响应文档的状态码，它们是对器上等待的所有线亿万程
 + notifyAll 和 notify 一样只能在拥有对象监视器的所有者线程中调用
@@ -393,7 +393,9 @@ Parallel Scavenge 的老年代版本。
 **** hashmap 和 hashtable
 ***** 关于HashMap的一些说法
 + HashMap实际上是一个“链表散列”的数据结构，即数组和链表的结合体。HashMap的底层结构是一个数组，数组中的每一项是一条链表。
-+ HashMap的实例有俩个参数影响其性能： “初始容量” 和 装填因子。
++ 在1.8中采用了数组+链表+红黑树的结构
+  + 当数组的大小超过64,且链表的元素个数超过默认设定(8)时，链表转为红黑树
++ HashMap的实例有俩个参数影响其性能： “初始容量” 和 装填因子
 + HashMap实现不同步，线程不安全。  HashTable线程安全
 + HashMap中的key-value都是存储在Entry中的。
 + HashMap可以存null键和null值，不保证元素的顺序恒久不变，它的底层使用的是数组和链表，通过hashCode()方法和equals方法保证键的唯一性
@@ -443,6 +445,71 @@ for (int j = 0; j < src.length; j++) {
 + 线程1 停在所示点处
 + 线程2 完成 rehashing 步骤，添加的元素放在链表的头部
 + 此时会产生死循环
+****** 哪些对象适合做键
++ String, Integer 这类不可变，且为 final，并且重写了 equals() 和 hashCode() 方法的 Wrapper
++ 需要遵从 equals() 和 hashCode() 方法的定义规则，并且当对象插入 Map 中之后，就不会再改变了
+**** hashtable 和 concurrenthashmap
+***** 区别
++ 两者的区别主要是性能上的差异
++ Hashtable 的所有操作都会锁住整个对象
++ Hashtable 属于 Collection 框架，而 ConcurrentHashMap 属于 Excutor 框架
++ ConcurrentHashMap 的 Iterator 是 fail-safe 的
++ 1.8 之前采用的是 Segment 的设计，之后采用的是 Node+CAS+Synchronized
+***** ConcurrentHashMap
+****** Segment
++ ConcurrentHashMap 内部使用 Segment 数组，每个 Segment 都类似于 Hashtable ，在写线程或部分特殊读时会锁住某个 Segment 对象
++ ConcurrentHashMap 的读操作会很快返回最新一次更新之后的结果值
++ Segment 是一种可重入锁 ReentrantLock，在 ConcurrentHashMap 中扮演锁的角色 
++ ConcurrentHashMap 中包含一个 Segment 数组，Segment 中包含一个 HashEntry 数组
++ 每个 HashEntry 是一个链表结构
+****** Node + CAS + Synchronized
+******* get 过程
++ 依据 k 计算出 hash 值，找到对应的数组 index
++ 如果该 index 位置无元素则直接返回 null
++ 如果该 index 有元素
+  + 如果第一个元素equals是，则返回第一个节点的值
+  + 如果是红黑节点 TreeBin，使用红黑树查找
+  + 如果第一个元素的 hash 大于等于0,则遍历链表
+******* size 方法
++ 由于 ConcurrentHashMap 在统计 size 时可能被多个线程操作，而我们又不能让他们停下来，所有只能计算出一个估计值
+******* put 方法
++ 判空：null
++ 计算hash
++ 遍历 table
+  + 如果 table 为空，则初始化
+  + 计算当前 key 存放位置
+  + 若该位置为 null，casTabAt 无锁插入，如果插入失败则继续
+  + 若是 forwarding nodes，则帮助其扩容
+  + 否则首先对头节点上锁，并依据是链表还是树插入，链表尾部插入
+******* 扩容方法 transfer
+无锁多线程扩容
++ 核心为 ForwardingNode，当遍历点的 hash 值为-1时，表示正在扩容。当该node完成扩容后，遍历下一个node扩容
++ 还有一个关键的参数为 stride，其表示每个处理器处理的最小node个数，一般为16
++ 开始后，对该线程使用 CAS 设置 transferIndex，如果原表的大小为64，此时 transferIndex 设置为48，该线程对48-64的数组扩容
++ 对于每个正在扩容的node，需要上锁，防止并发冲突
++ 对于链表来说，扩容中的一个技巧是利用原来的hash值计算每个节点的 hash&n
+  + 因为bucket是通过hash&n-1来计算的，如果n-1为11..1，那么n为10..0
+  + 其设置第一个节点的计算结果为 runBit，与 runBit 相反的计算结果的从最后一个节点开始连续的链表头为 lastRun
+  + 之后依据runBit的值，分别设置ln和hn的值为null和lastRun
+  + 之后从头向lastRun遍历，并添加到新表中
+  + 假设链表i中存储1-2-3-4-5-6-7，其对应的计算为0-1-0-1-0-1-1
+  + 5-3-1 存储在链表i中
+  + 4-2-6-7存储在链表i+n中
++ 对于红黑树来说
+  + 遍历红黑树，依据计算值分别插入lo和hi的树中
+  + 如果lo链表的元素个数小于等于阈值，则转换为链表
+  + 否则判断hi中的元素个数是否大于0,等于的话就直接将原始树赋值给ln
+  + 对hi进行和之前两步相对等的判断
+
+扩容的触发条件
++ 如果新增节点之后，所在链表的元素个数达到了阈值8，则使用 treeifyBin 将链表转换成红黑树
++ 在实际转换之前，会对数组长度进行判断，如果数组长度小于阈值则，调用 tryPresize 把数组长度扩为两倍，并触发 transfer 方法重新调整节点位置
++ 新增节点后，会调用 addCount 方法记录元素个数，并检查个数阈值是否需要进行扩容
+
+扩容操作分为两个部分
++ 第一部分是构建一个nextTable，它的容量是原来的两倍，这个操作是单线程完成的。这个变量是通过 RESIZE_STAMP_SHIFT 这个常量经过一次运算来保证的。
++ 第二部分是原来 table 的元素复制到 nextTable 中，这里允许多线程操作。
+
 ** Java多线程实现的方式
 *** 继承Thread类
 + Thread类本质上是实现了 Runnable 接口的一个实例。
