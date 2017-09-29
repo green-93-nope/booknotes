@@ -112,6 +112,28 @@
 ** 包装类
 + 包装类的 "==" 运算在不遇到算术运算的情况下不会自动拆箱
 + 包装类的 equals() 方法不处理数据转型
+*** int 与 Integer
++ int是一种原始类型，其保存的是真实的二进制数值
++ Integer是一个java.lang.Integer类型的对象
+**** int和Integer之间的选择
++ 有性能要求时使用int
++ 需要使用对象的方法隐式要求使用Integer
++ 对于处于(-128~127)之间的数字，由于object interning的原因，使用起来代价更低，此时应使用Integer.valueOf(int)而不是new Integer(int).
++ 缓存的范围大小可以通过AutoBoxCacheMax来进行调整
++ 对于 Integer 类型，不要使用 == 或 != 。
++ 考虑使用 Integer 当你需要考虑表示缺失数值时(null)。
+**** int和Integer之间的不可互换
++ boolean List.remove(Object findThis):删除第一个和参数equals的对象
++ Object List.remove(int index):删除在指定位置的对象，并返回该对象
++ int 类型的自动装箱会调用 Integer.valueOf(int)
++ Integer 变量指向一个内存地址
++ 在(-127~128)之间的Integer变量使用valueOf所缓存的值
++ 在上述范围之外的Integer变量则会触发new Integer(int)
++ 对于表达式 boolean ? int : Integer 或者 boolean? Integer : int，Integer总是被拆箱成int.
++ 当比较一个Integer对象和一个int时，会对Integer自动拆箱
++ 当使用Integer.equals(int)时，会对int类型自动装箱成Integer类。
+**** Integer
++ 比较两个Integer对象是否相等，好的做法是x.equals(y) 或者 x.intValue() == y.intValue()
 ** 序列化
 + 要求在 JVM 停止运行之后能够保存指定的对象，并在将来重新读取保存的对象。
 + 使用Java对象序列化，在保存对象时，会把状态保存为一组字节。
@@ -284,6 +306,11 @@ Parallel Scavenge 的老年代版本。
 + 线程不安全
 + 查找速度慢，消耗更多内存
 + 增加、删除速度较快
+***** CopyOnWriteArrayList
+  + 任何对array结构上有所改变的操作，CopyOnWriteArrayList都会copy现有的数据，再在copy的数据上修改，完成后改变原有数据的引用。
+  + 读操作不用加锁，写的时候先加锁防止并发问题
+  + 这样造成的代价是产生大量的对象，同时数组的 copy 也是相当有损耗的。
+  + 其和 ArrayList 一样，都是实现了List接口，底层使用数组实现。
 ***** Vector
 + 数组结构
 + 线程安全
@@ -348,10 +375,6 @@ Parallel Scavenge 的老年代版本。
 + 为提高这类迭代器的正确性而编写一个以来于此异常的程序是错误的做法，其仅用于检测bug。
 + 在并发场景下，推荐使用线程安全的类，其采用的是 fail-safe 方式设计。
 + 在 Collection 中所有 Iterator 的实现都是按 fail-fast 来设计的。
-***** CopyOnWriteArrayList
-  + 任何对array结构上有所改变的操作，CopyOnWriteArrayList都会copy现有的数据，再在copy的数据上修改，完成后改变原有数据的引用。
-  + 这样造成的代价是产生大量的对象，同时数组的 copy 也是相当有损耗的。
-  + 其和 ArrayList 一样，都是实现了List接口，底层使用数组实现。
 **** Comparable 和 Comparator 接口
 ***** Comparable 自然排序
 #+BEGIN_SRC java
@@ -411,7 +434,7 @@ Parallel Scavenge 的老年代版本。
 + HashMap 中的 Iterator 是 fail-fast 迭代器，而 HashTable 中的 Enumeration 不是。
 + 哈希值的使用不同，HashTable直接使用对象的hashCode。而HashMap重新计算hash值。
 + Hashtable和HashMap它们两个内部实现方式的数组的初始大小和扩容的方式。HashTable中hash数组默认大小是11，增加的方式是old*2+1。HashMap中hash数组的默认大小是16，而且一定是2的指数。
-+ HashMap 不能保证随着时间的推移Map中的元素次序是不变的。
++ HashMap 不能保证随着时间的推移Map中的元素次序是不变的。(hashtable应该同样是？)
 
 注：  HashSet子类依靠hashCode()和equal()方法来区分重复元素。
      HashSet内部使用Map保存数据，即将HashSet的数据作为Map的key值保存，这也是HashSet中元素不能重复的原因。而Map中保存key值的,会去判断当前Map中是否含有该Key对象，内部是先通过key的hashCode,确定有相同的hashCode之后，再通过equals方法判断是否相同。
