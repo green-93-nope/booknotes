@@ -38,6 +38,15 @@
  + 要有继承
  + 要有重写
  + 父类引用指向子类对象(向上转型)
+*** 面向对象的六原则一法则
++ 单一职责原则
++ 开闭原则：对扩展开放，对修改关闭
++ 依赖倒转原则：面向接口编程
++ 里氏替换原则：任何时候都可以用子类型替换掉父类型
++ 接口隔离原则：接口要小而专
++ 合成聚合原则：有限使用聚合或合成关系复用代码
++ 迪米特法则：一个对象应当对其他对象尽可能少的了解
++ 总结：高内聚，低耦合
 ** Object方法
 *** getClass
 + 返回运行时对象的Class对象
@@ -101,6 +110,24 @@
   + 程序所在的线程死亡
   + 关闭CPU
 + 如果finally中拥有return 或改变之前的返回值，将会导致和预期相违背的情况出现
+*** try-with-resources
++ Java7 增加了资源管理语法，来自动化管理资源
++ TWR改善了错误跟踪的能力，能够更准确地跟踪堆栈中的异常
++ 使用TWR语法的类需要实现AutoCloseable接口
++ 在某些情况下资源不能关闭
++ 要确保try-with-resources生效，正确的用法是为各个资源声明独立变量
+
+#+BEGIN_SRC java
+  try(ObjectInputStream in = new ObjectInputStream(new FileInputStream("file"))) {
+  }
+#+END_SRC
+如果file存在，但不是ObjectInput类型的文件，就无法构建ObjectInputStream，而FileInputStream也无法关闭
+
+#+BEGIN_SRC java
+  try (FileInputStream fin = new FileInputStream("file");
+       ObjectInputStream in = new ObjectInputStream(fin)) {
+  }
+#+END_SRC
 ** String类
 *** String类
 + String类是final类，不可以被继承
@@ -168,6 +195,14 @@
 #+BEGIN_SRC java
   String s2 = new String(s1.getBytes("GB2312"), "ISO-8859-1");
 #+END_SRC
+*** 正则表达式
++ String 类支持 matches(), replaceAll(), replaceFirst(), split()等方法
++ Java 类还可以使用Pattern类来表示正则对象
+
+#+BEGIN_SRC java
+  Pattern p = Pattern.compile(".*?(?=\\()");
+  Match m = p.matches(str);
+#+END_SRC
 ** 基本类型与包装类
 *** 基本类型
 + 基本类型有8个：byte、short、int、long、float、double、char、boolean。
@@ -226,6 +261,14 @@
  + 虚拟机是否允许反序列化，不仅取决于类路径和功能代码是否一致，还需要序列化的类和本地实体类的序列化ID一致。
  + Transient 关键字的作用是控制变量的序列化，在变量声明前加上该关键字，可以阻止该变量被序列化到文件。在反序列化后，transient 变量的值被设置为初始值0,null。
  + 在类中增加 writeObject 和 readObject 方法可以实现自定义序列化策略。
+ + 序列化除了可以实现对象的持久化之外，还能够用于对象的深度克隆
+** Java 字符流
++ 字节流：InputStream, OutputStream
++ 字符流：Reader, Writer
++ 使用：
+  + 对称性：输入和输出的对称性，字节和字符的对称性
+  + 适配模式
+  + 装饰模式
 ** Java NIO
 *** 目的
 使用高速 IO 而无需编写自定义的本机代码。
@@ -239,7 +282,8 @@
 ***** 缓冲区(buffer)：
  + Position:当前位置
  + Limit:最大可读/写的位置
- + Capacity:
+ + Capacity:总容量
+ + flip 方法通过改变Position和Limit的值来切换读写
 **** 非阻塞 IO
 Java NIO 可以让你非阻塞地使用 IO
 **** 选择器
@@ -368,10 +412,6 @@ Parallel Scavenge 的老年代版本。
 + 如果 equals 判断两个对象相等，则 hashCode 一定相等。
 + 如果两个对象的 hashCode 相等，其 equals 不一定判断相等。
 + 如果覆盖了 equals 方法，也需要覆盖对应的 hashCode 方法，否则散列表中将存在重复值。
-** wait 和 sleep 的区别
-+ sleep 是 Thread 类的方法，wait 是 Object 类中定义的方法。
-+ sleep 不会导致锁行为的改变。而 wait 是会释放锁的。（可认为锁的方法都在 Object 类中）
-+ 调用 wait 之后，需要别的线程调用 notify/notifyAll 才能重新获得 CPU 执行时间。
 ** Java类与对象
 *** Java类启动
  + 父类静态字段和静态代码段
@@ -481,10 +521,21 @@ Parallel Scavenge 的老年代版本。
 + 修饰类：表示该类不能被继承
 + 修饰方法：表示方法不能被重写
 + 
+*** 获取类对象的方式
++ String(类型).class
++ obj.getClass()
++ Class.forName("java.lang.String"(类名))
+*** 使用反射创建对象
++ 无参数: String.class.newInstance()
++ 带参数: String.class.getConstructor(String.class).newInstance("Hello")
+*** 通过反射获取和设置私有对象私有字段
++ 通过类对象的getDeclaredField方法获取字段对象
++ 通过字段对象的setAccessible(true)来将其设置为可以访问
++ 通过get/set方法来获取/设置字段的值
 ** 集合类
 + 集合类主要分为Collection和Map这两类
 + Iterator是遍历集合的迭代器(不能用来遍历Map,只能用来遍历Collection)
-+ Arrays和Collections是用来操作数组，集合带两个工具类
++ Arrays和Collections是用来操作数组，集合这两个工具类
 *** Collection
 **** List
 + list 中允许空元素的存在
@@ -599,6 +650,7 @@ Parallel Scavenge 的老年代版本。
 **** 特殊集合
 + Collections.unmodifiableCollection(Collection c)
 + Collections.synchronizedCollection(Collection c)
++ Collections.synchronizedList(List ls)(需要在遍历时，对整个链表加锁)
 *** Map
 + Map 接口提供了三个集合视图：
   + Set keyset()
@@ -728,13 +780,38 @@ for (int j = 0; j < src.length; j++) {
 + 第一部分是构建一个nextTable，它的容量是原来的两倍，这个操作是单线程完成的。这个变量是通过 RESIZE_STAMP_SHIFT 这个常量经过一次运算来保证的。
 + 第二部分是原来 table 的元素复制到 nextTable 中，这里允许多线程操作。
 
-** Java多线程实现的方式
-*** 继承Thread类
-+ Thread类本质上是实现了 Runnable 接口的一个实例。
-+ 使用Thread类的start()实例方法启动新线程。
-*** 实现 Runnable 接口
-*** 实现 Callable 接口通过 FutureTask 包装器来创建 Thread 线程
-*** 使用 Executor 框架进行线程的创建及管理
+** 多线程方法
+*** wait 和 sleep 的区别
+ + sleep 是 Thread 类的方法，wait 是 Object 类中定义的方法。
+ + sleep 不会导致锁行为的改变。而 wait 是会释放锁的。（可认为锁的方法都在 Object 类中）
+ + 调用 wait 之后，需要别的线程调用 notify/notifyAll 才能重新获得 CPU 执行时间。
+*** sleep 和 yield 的区别
++ sleep不考虑线程优先级，而yield只会给相同优先级或更高优先级的线程机会
++ 线程sleep方法后转入阻塞状态，而执行yield后转入就绪状态
++ sleep方法有InterruptedException异常，而yield没有任何异常
++ sleep比yield具有更好的可移植性(与CPU调度有关)
+*** 同步与异步
++ 当系统中面临临界资源时，数据需要同步存取
++ 当应用程序在对象上调用花费较长时间的方法时，可以采取异步操作
+*** 线程的基本状态
++ Running:运行状态
++ Runnable:就绪状态
++ Blocked:阻塞状态
+  + Blocked: 调用sleep方法或join方法或I/O中断等待休眠或其他线程结束
+  + Blocked in Object's Wait Pool:调用wait方法进入等待池
+  + Blocked in Object's Lock Pool:调用同步方法或同步代码块进入等待池
+*** Java多线程实现的方式
+**** 继承Thread类
+ + Thread类本质上是实现了 Runnable 接口的一个实例。
+ + 使用Thread类的start()实例方法启动新线程。
+**** 实现 Runnable 接口
+ + 可继承其他类
+**** 实现 Callable 接口通过 FutureTask 包装器来创建 Thread 线程
+**** 使用 Executor 框架进行线程的创建及管理
+*** synchronized 和 java.util.concurrent.locks.Lock
++ Lock可以完成synchronized所实现的所有功能
++ Lock有比synchronized更精确的线程语义和更好的性能
++ synchronized自动释放锁，而Lock一定要手工释放，并且最好在finally中释放
 ** 同步工具类
 *** 闭锁
 + CountDownLatch
@@ -753,6 +830,10 @@ for (int j = 0; j < src.length; j++) {
 + 闭锁用于等待事件，而栅栏用于等待其他线程。
 ** 线程池
 + 利用线程池可以大大减少在创建和销毁线程上所花的时间以及系统资源的开销。
++ 在创建和销毁对象的过程中：
+  + 获取内存资源
+  + 虚拟机需要跟踪对象
+  + 销毁后需要垃圾回收
 *** 好处
 + 降低资源消耗
 + 提高响应速度
@@ -931,6 +1012,60 @@ for (int j = 0; j < src.length; j++) {
 + 面向对象与基于对象
 + 解释和编译，JS(JIT即时编译优化)
 + 强类型和弱类型
+* Java Web
+** XML
+*** 作用
++ 数据交换
++ 信息配置
+** UML
++ 统一语言建模图
++ 最重要的三种图：
+  + 用例图：用来铺获需求，描述系统功能，及各个模块之间的关系
+  + 类图：类之间的关系
+  + 时序图：描述执行特定任务时对象之间的交互关系及执行顺序，还有对象向外界提供的服务
+** 数据库编程
+*** JDBC
+**** 步骤
+ + 加载驱动
+ + 创建连接
+ + 创建语句
+ + 执行语句
+ + 处理结构
+ + 关闭资源
+**** 提升性能
+ + 通过结果集(Resultset)对象的setFetchSize()方法指定每次抓取的记录数(空间换时间)
+ + 使用PreparedStatement语句构建批处理
+**** 事物处理
++ setAutoCommit(false)
++ commit()
++ rollback()
++ savePoint()
+**** 对大对象的支持
++ Blob:二进制大对象，使用SetBinaryStream与PreParedStatement配合
++ Clob:大字符对象
+*** Java查询语句
++ Statement：用于通用查询
++ PreparedStatement: 用于执行参数化查询
++ CallableStatement: 用于存储过程
+**** PreparedStatement
++ 数据库系统会对该种sql语句预编译(如果JDBC支持的话)
++ 默认返回"TYPE_FORWARD_ONLY"类型的结果集，也可以使用preparedstatement的重载方法返回不同类型的结果集
++ 使用next方法移动结果集的游标
++ PreparedStatement可以写动态参数化查询，使用?作为占位符
++ PreparedStatement比Statement更快，语句预编译，执行计划缓存
++ PreparedStatement可以防止SQL注入式攻击(避免SQL注入的另一种方式是将传入的参数做字符取代，将两个单引号改为两个连续的单引号(视为单引号字符))
++ 可读性更好
++ 分别进行单条查询性能较差
++ 不是所有数据库都支持存储过程
++ 无法享受PreparedStatement缓存带来的好处
+*** 数据库连接池
+*** DAO模式
++ Data Access Object为数据库或其他持久化机制提供了抽象接口的对象
++ 在不暴露底层持久化方案实现的情况下提供各种数据访问操作
++ 在实际开发中，应该将所有对数据源的访问操作进行抽象化封装在一个公共API中
++ DAO中包含有两个模式
+  + Data Accessor数据访问器: 如何访问数据
+  + Data Object数据对象: 如何用对象封装数据
 * Python
 ** Python 和多线程
 Python中有一个被称为Global Interpreter Lock（GIL）的东西，它会确保任何时候你的多个线程中，只有一个被执行。
@@ -1474,13 +1609,13 @@ schema 是对一个数据库的结构性描述。
 + 查询特点
 ** 什么是存储过程
 *** 存储过程与函数
-存储过程是一些预编译的SQL语句，涉及特定表及其他任务，用户可以执行存储过程。
-
-函数是数据库已定义的方法，它接收参数并且返回某种类型的值，并且不涉及特定用户表。
-*** 存储过程的优点
++ 存储过程是一些预编译的SQL语句，涉及特定表及其他任务，用户可以执行存储过程，其存储在数据库中。
++ 函数是数据库已定义的方法，它接收参数并且返回某种类型的值，并且不涉及特定用户表。
+*** 存储过程的特点
 + 存储过程是一个预编译的代码块，执行效率高。
 + 一个存储过程替代大量的SQL语句，可以降低网络通信量。
-+ 可以在一定程度上确保数据安全。
++ 其更加安全
++ 虽然使用存储过程能在网络开销、安全性、性能上获得很多好处，但在数据库迁移时却会产生麻烦
 ** 数据库优化
 *** 指导思路
 + 首先保证写出的SQL都是优化器喜欢的
@@ -1715,6 +1850,15 @@ schema 是对一个数据库的结构性描述。
 + 一个含有 n 个内部结点的红黑树，其高度最多为2lg(n+1)
 *** 旋转
 * 设计模式
+** 最常用
++ 工厂模式
++ 代理模式
++ 适配器模式
++ 模板方法模式
++ 门面模式
++ 桥梁模式
++ 单例模式
++ 装饰模式
 ** 创建型模式
 *** 抽象工厂
 提供一个创建一系列相关或相互依赖对象的接口，无需指定它们具体的类。
@@ -1809,6 +1953,9 @@ Build模式的效果：
       INSTANCE;
   }
 #+END_SRC
+**** Java单价模式和Spring单件模式的区别
++ Java单件模式的作用域由类加载器所控制，其要求在给定类加载器中只能有一个实例
++ 而Spring的则由容器上下文所管理，其要求不能在给定容器上下文中创建多于一个类实例
 ** 结构型模式
 *** 适配器模式
 将一个类的接口转换为客户希望的另一个接口。
