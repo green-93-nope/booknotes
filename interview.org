@@ -23,7 +23,7 @@
 + 重写方法一定不能抛出新的检查异常或比被重写的方法声明的检查异常更广泛的检查异常
 + 重写的方法能够抛出更少或更有限的异常（也就是说，被重写的方法声明了异常，但重写的方法可以什么也不声明）
 + 不能重写被标示为final的方法；
-+ 如果不能继承一个方法，则不能重写这个方法。
++ 如果不能继承一个方法，则不能重 吃法写这个方法。
 
 重载的条件：
 + 被重载的方法必须改变参数列表；
@@ -1066,6 +1066,203 @@ for (int j = 0; j < src.length; j++) {
 + DAO中包含有两个模式
   + Data Accessor数据访问器: 如何访问数据
   + Data Object数据对象: 如何用对象封装数据
+** Servlet
+*** Servlet和CGI
++ Servlet存在于服务器进程中，通过多线程的方式运行其service()方法，一个实例可服务于多个请求
++ Servlet是在容器中运行的，其将用户的请求传递给Servlet程序，并将Servlet的响应回传给用户
++ Servlet实例不会销毁
++ CGI对每个请求都产生新的进程，服务完以后就销毁
++ Fast CGI解决了CGI效率上的问题
+*** Servlet接口
++ void init(ServletConfig config) throws ServletException web容器运行其Servlet并对其初始化
++ void service(ServletRequest req, ServletResponse resp) throws ServletException, java.io.IOException
++ void destroy() 服务器关闭或项目卸载时销毁
++ java.lang.String.getServletInfo()
++ ServletConfig getServletConfig() 
+*** Servlet方法
++ getParameter方法可以通过参数名获得参数值
++ 如果有多个值的参数，可以通过请求对象的getParameterValues方法获得
++ 也可以通过对象的getParameterMap来获得一个参数名和参数值的映射
+*** 获取用户配置的初始化参数及服务器上下文参数
++ 可以通过重写Servlet接口的init(ServletConfig)方法或通过ServletConfig对象的getInitParameter方法来获取Servlet的初始参数
++ 通过ServletConfig对象的getServletContext方法获取ServletContext对象，并通过对象的getInitParameter方法来获取服务器上下文参数
++ Servlet对象也可以在处理用户请求的方法中通过请求对象的getServletContext方法获得
+*** 转发和重定向
++ forward是容器中控制器的转向，是服务器请求资源
++ redirect是服务器根据逻辑，发送一个状态码，告诉浏览器重新去请求那个地址
++ forward更加高效，并且有助于隐藏实际链接
++ redirect可以访问其他服务器上的资源
+*** 过滤器
+**** 作用
++ 对请求或者响应进行过滤任务
+**** 用途
++ 对用户请求进行统一认证
++ 对用户的访问请求进行记录和审核
++ 对用户发送的数据进行过滤和替换
++ 转换图像格式
++ 对响应内容进行压缩以减少传输量
++ 对请求或响应进行加解密处理、触发资源访问事件、对XML的输出应用XSLT
+**** 主要接口
++ Fiter
++ FilterConfig
++ FilterChain
+*** 监听器
++ ServletContextListener: 对Servlet上下文的创建和销毁进行监听
++ ServletContextAttributeListener: 监听Servlet上下文属性的添加，删除和替换
++ HttpSessionListener: 对Session的创建和销毁进行监听
++ HttpSessionAttributeListener: 对Session对象中属性的添加，删除和替换进行监听
++ ServletRequestListener: 对请求对象的初始化和销毁进行监听
++ ServletRequestAttributeListener: 对请求对象属性的添加、删除和替换进行监听
+*** web.xml
++ 用于配置Web应用相关信息
++ 监听器，过滤器，Servlet，相关参数，会话超时时间，安全验证方式，错误页面等
++ Servlet 3规范提供了@WebServlet,@WebListener,@WebFilter等注解
+*** 异步处理
++ 解决当任务处理时间很长时，Servlet或Filter会一直占用请求处理线程，导致容器遭遇线程超出的风险
++ 异步特性可以帮助节省容器中的线程，特别适合执行时间长而且用户需要得到结果的任务
++ 如果用户不需要得到结果则直接将一个Runnable对象交给Executor即可
++ 异步线程拥有ServletRequest和ServletResponse对象的引用
++ 在Servlet线程将请求转交给一个异步线程来执行业务处理后，线程本身返回至容器，此时Servlet还未生成响应数据，异步线程处理完业务后，可以直接生成响应数据或将请求转发给其他Servlet
++ Servlet 3还为异步处理提供了一个监听器，使用AsyncListener接口表示
+*** 表单数据的提交
++ HTML中<form>元素的method属性指定，可以是get或post
++ doGet方法时，会在url后边显示提交的内容，不安全，而且最多只能提交1024字节
++ 可以在doGet中调用doPost方法来共用代码
+** JSP
+*** 内置对象
++ request:封装客户端的请求，其中包含来自GET或POST请求的参数
++ response:封装服务器对客户端的响应
++ pageContext:通过该对象可以获取其他对象
++ session:封装用户会话对象
++ application:封装服务器运行环境的对象
++ out:输出服务器响应的输出流对象
++ config:Web应用的配置对象
++ page:JSP页面本身
++ exception:封装页面抛出异常的对象
+*** 和Tomcat的配合
++ Tomcat就是一个Servlet/JSP容器
++ 其将JSP页面转换成一个JSP页面的实现类，这是一个实现了JspPage接口的Java类，该接口是Servlet的子接口
++ 转换成功后，容器会编译Servlet类，之后容器加载和实例化Java字节码，并执行生命周期操作
++ 对同一个JSP页面的后续请求，容器会查看这个JSP页面是否被修改过，如果改过则重新来一遍
+*** JSP和Servlet
++ Servlet是一个特殊的Java程序，它运行于服务器的JVM中，能够依靠服务器的支持向浏览器提供显示内容
++ JSP本质是一个用来简化页面内容生成的类似于Servlet的Java程序。
++ Servlet的应用逻辑是在Java文件中，并且完全从表示层中的HTML分离开。
++ JSP则是Java和HTML可以组合成一个扩展名为.jsp的文件名
++ JSP更侧重于视图，而Servlet则充当控制器
+*** JSP中的四种作用域
++ page:代表一个页面相关的对象和属性
++ request:代表与Web客户机发出的一个请求相关的对象和属性，一个请求可跨越多个页面，涉及多个Web组件
++ session:代表与某个用户与服务器建立的一次会话相关的对象和属性，与某个用户相关的数据应放在用户自己的session中
++ application:代表与整个Web应用程序相关的对象和属性
+*** 如何实现JSP或Servlet如何实现单线程
++ JSP: <%@page isThreadSafe="false"%>
++ Servlet: 自定义的Servlet实现SingleThreadModel标识接口
++ 设置成单线程后，会导致严重的性能问题
+*** Model1和Model2
++ Model1是以页面为中心的Java Web开发，使用JSP+JavaBean技术将页面显示逻辑和业务逻辑分开，JSP实现页面显示，JavaBean对象用来保存数据和实现业务逻辑
++ Model2是基于MVC架构模式的开发模型，实现了模型和视图的彻底分离，Servlet，JavaBean，JSP
+** 网络应用模式
++ B/S:Browser,Server;可以视为特殊的C/S，却避免了安装、配置、升级客户端带来的各种开销
++ C/S:Client;
++ P2P:成千上万彼此连接的计算机处于对等的地位，每台计算机既能充当网络服务的请求者也能对其他计算机的请求作出响应
+** 实现会话跟踪的技术
++ URL重写：在URL中添加用户会话信息作为请求的参数，或者将唯一的会话ID添加到URL结尾以标识一个会话
++ 设置表单隐藏域
++ 上述两种方法很难处理跨越多个页面的信息传递
++ cookie:
+  + 基于窗口的，浏览器关闭后就没了
+  + 将信息存在临时文件中，并设置存在时间
+  + 在cookie中不能存放敏感信息，cookie中存储的数据量有限，不能将过多的内容存储cookie中
++ HttpSession：当一个对象第一次访问某个网站时会自动创建HttpSession，并存放在服务器的内存中，每个用户访问自己的HttpSession，存放的对象最好实现Seraiblizable接口以便序列化到文件
++ HTML5中允许Web Storage技术通过JS来保存数据，比如通过localStorage和sessionStorage保存用户会话
+** Web Service
++ 从表面上看，Web Service是一个应用程序，它向外界暴露出一个能够通过Web进行调用的API
++ 它基于HTTP协议传输数据
++ 通过编程方法透明地调用这个应用，运行在不同机器上的不同应用无需附近的硬件或软件
++ 是SOA(Service-Oriented Architecture-将应用程序的不同功能单元通过中立的契约联系起来)的一种较好的解决方案，更多的是一种标准，而不是具体的技术
+*** 相关概念
++ WSDL(Web Service Description Language)：Web服务描述语言，是一个基于XML的关于如何与Web服务通信和使用的服务描述
++ UDDI(Universal Description, Discovery and Integration)：统一描述，发现和集成，是一个基于XML的跨平台的描述规范，是访问各种WSDL的门面
+*** 主流web服务实现方法
++ SOAP(Simple Object Access Protocol)：简单对象访问协议，是Web Service中交换数据的一种协议规范，成熟度高，安全性好
++ REST(Representation State Transfer)：简单易用，效率高
+*** Java中相关Web Service规范
++ JAXM(JSR 67)：定义了发送和接受消息所需的API，相当于Web Service的服务端
++ JAX-RS(JSR 311 & JSR 339 & JSR 370)：是Java针对REST风格的一套Web Service规范。REST完全依赖HTTP协议完成Web Service，而不像SOAP那样之利用了HTTP的传输特性，定位和操作都由SOAP协议完成(SOAP因为太笨重而渐渐淘汰)
+** 持久层
+*** ORM
++ 对象关系映射(Object-Relational Mapping)是一种为了解决程序的面向对象模型与数据库关系模型不匹配的技术
++ 通过使用描述对象和数据库直接映射的元数据(注解或XML)来将程序中的对象自动持久化到关系型数据库或将关系型数据库中的行转换为Java对象
+*** 持久层
++ 将内存中的数据保存到关系型数据库，文件系统，消息队列等提供持久化支持的设备中
+**** 目标
++ 数据存储逻辑的分离，提供抽象化的数据访问接口
++ 数据访问底层实现的分离，可在不修改代码的情况下切换底层实现
++ 资源管理和调度的分离，在数据访问层实现统一的资源调度(如缓存机制)
++ 数据抽象，提供更面向对象的数据操作
+**** 框架
++ Hibernate
++ MyBatis
++ Spring Data
+*** Hibernate
+**** SessionFactory和Session是否线程安全
++ SessionFactory对应Hibernate数据存储的概念，是线程安全的，一般只在启动的时候构建
++ 对于应用程序，最好将SessionFactory通过单例模式封装以便访问
++ Session是一个轻量级非线程安全的对象，表示与数据库交互的一个工作单元
++ Session是持久层服务对外提供的主要接口，会延迟获取数据库连接
++ 为避免创建太多的session，可以使用ThreadLocal将session和当前线程绑定
+**** Session的load和get方法
++ 如果没有找到符合条件的记录，get方法返回null,load方法抛出异常
++ get方法直接返回实体类对象，load方法返回实体类对象的代理
+**** Session中的方法
++ Hibernate对象有三种状态：瞬时态(transient)、持久态(persistent)和游离态(detached)
++ 瞬时态的实例可以调用save,persist或saveOrUpdate方法变成持久态
++ 游离态的实例可以通过update,saveOrUpdate,lock或replicate变成持久态
++ merge方法可以完成save和update方法的功能，它的意图是将新的状态合并到已有的持久化对象上或创建新的持久化对象
++ update是把已经更改过的托管对象变成持久状态，lock是把一个没有更改过的托管对象变成持久状态
++ persist把一个瞬时态的实例持久化，但是不保证标识符立即填入持久化实例，可能推迟到flush的时间
++ persist保证在事务外部被调用时，不触发INSERT语句，而save方法不保证
++ save方法要返回标识符，所以会立即执行INSERT，无论是在事务内部还是外部
+**** Session加载实体对象的过程
++ Session在调用数据库查询功能之前，首先在一级缓存中通过实体类型和主键查找
++ 如果未命中，接着在NonExists(黑名单)记录中查找，如果有则返回null
++ 接下来查找二级缓存
++ 如果均未命中，则发出SQL语句，若无记录则添加到Session的NonExists中
++ 根据映射配置得到ResultSet，并创建实体对象
++ 将对象添加到Session(一级缓存)中管理
++ 如果有拦截器，则执行其onLoad方法(拦截初始化的方法)
++ 如果开启了二级缓存，则添加
++ 返回对象
+**** Query接口中的list方法和iterate方法
++ list方法无法利用一级和二级缓存(对缓存只写不读),只能在开启查询缓存的前提下使用查询缓存
++ iterate方法可以充分利用缓存，特别适合只读或读取频繁的场景
++ list方法不会引起N+1差异问题而iterate会(从含有n个对象的表中读取包含的对象，需要先找出所以对象1+依次查找关联对象n次select，当不需要关联数据时依旧会读取)
+**** 分页查询
+开发人员只需要提供HQL语句（Session的createQuery方法)或查询条件(Session的createCriteria方法)，
+设置查询其实行数(Query或Criteria接口的setFirstResult方法)和最大查询行数(Query或Criteria接口的setMaxResult方法)，
+并调用Query或Criteria接口的list方法，Hibernate会自动生成分页查询的SQL语句。
+**** 乐观锁和悲观锁的机制
++ Hibernate中通过Session的get和load方法从数据库加载对象时可以通过参数指定使用悲观锁(query.setLockMode("user",LockMode,UPGRADE);)
++ 而乐观锁在通过给实体类加整型的版本字段再通过XML或@Version注解进行配置
+**** Hibernate的检索策略
+***** 类级别检索策略
++ 立即检索(默认)
++ 延迟检索：通过lazy属性来确定，仅适用load检索
+***** 关联级别检索
+一对多和多对多
++ 立即检索(一对多的默认检索策略,N+1问题)：此时lazy=false,out-join=false，如果关联集合是无用的，则不要用这种方式
++ 延迟检索：此时lazy=true,out-join=false
++ 迫切左外连接检索(利用了sql的外连接)：lazy=false,out-join=true，只适用于依靠id检索(load,get)，而不适合query的集合检索(采取立即检索策略)
+
+多对一和一对一关联
+<many-to-one>中的outer-join属性
++ auto:默认，lazy=true则延迟检索，否则迫切左外连接检索
++ true:均为迫切左外连接检索
++ false:lazy=true则延迟检索，否则立即检索
+
+<one-to-one>中的constrained属性
++ 如果采用懒加载机制，必须把constrained属性设为true
 * Python
 ** Python 和多线程
 Python中有一个被称为Global Interpreter Lock（GIL）的东西，它会确保任何时候你的多个线程中，只有一个被执行。
