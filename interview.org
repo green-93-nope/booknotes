@@ -27,7 +27,7 @@
 
 重载的条件：
 + 被重载的方法必须改变参数列表；
-+ 被重载的方法可以改变返回类型；
++ 被重载的方法可以菜，胡萝卜，莲藕，苦瓜，南瓜，地瓜，红薯，青瓜，豆角，豌豆，黄豆芽，秋葵，香菜，西红柿，茄子，玉米，洋葱，葱，土豆，香菇，蘑菇，金改变返回类型；
 + 被重载的方法可以改变访问修饰符；
 + 被重载的方法可以声明新的或更广的检查异常；
 + 方法能够在同一个类中或者在一个子类中被重载。
@@ -1026,6 +1026,15 @@ for (int j = 0; j < src.length; j++) {
   + 时序图：描述执行特定任务时对象之间的交互关系及执行顺序，还有对象向外界提供的服务
 ** 数据库编程
 *** JDBC
+**** 什么是JDBC
++ Java数据库连接(Java DataBase Connection)可以用来操作关系型数据库
++ JDBC接口及相关类在java.sql包和javax.sql包里
++ 可以用来连接数据库，执行SQL查询，存储过程，并处理返回的结果
++ JDBC接口让Java程序和JDBC驱动实现了松耦合，使得切换不同的数据库更加简单
+**** JDBC是如何实现Java程序和JDBC驱动的松耦合的
++ JDBC API使用Java的反射机制来实现Java程序和JDBC驱动的松耦合
++ 使用Class.forName()动态加载驱动类，并注册到DriverManager类中
++ 接着使用DriverManager.getConnection方法来调用所注册的驱动方法
 **** 步骤
  + 加载驱动
  + 创建连接
@@ -1036,7 +1045,15 @@ for (int j = 0; j < src.length; j++) {
 **** 提升性能
  + 通过结果集(Resultset)对象的setFetchSize()方法指定每次抓取的记录数(空间换时间)
  + 使用PreparedStatement语句构建批处理
-**** 事物处理
+**** Resultset
++ Resultset对象维护了一个游标，指向当前的数据行
++ 调用next方法会下移一行，如果没有更多数据则返回false
++ 如果要设置可回滚或可更新的Resultset，需要在创建语句时传入相应的参数
++ 使用getInt,getString等参数来获取相应的列数据
++ 当执行一条查询语句时，查询到的数据是在数据库的缓存中维护的，Resultset引用的就是数据库缓存中的结果
++ setFetchSize参数设置的就是数据库驱动每次取的数据
++ setMaxRows用来限制返回的数据集的行数
+**** 事务处理
 + setAutoCommit(false)
 + commit()
 + rollback()
@@ -1044,6 +1061,21 @@ for (int j = 0; j < src.length; j++) {
 **** 对大对象的支持
 + Blob:二进制大对象，使用SetBinaryStream与PreParedStatement配合
 + Clob:大字符对象
+**** JDBC的DataSource
++ DataSource即数据源，其功能比DriverManager更强大，除了可以用来创建数据库连接外，还能：
+  + 缓存PreparedStatement以便更快的执行
+  + 可以设置连接超时时间
+  + 提供日志记录的功能
+  + ResultSet大小的最大阈值设置
+  + 通过JNDI的支持，可以为servlet容器提供连接池的功能
+**** DBCP
++ Apache的DBCP用来解耦获取连接的代码和驱动特定的DataSource
++ 它提供的DataSource实现了应用程序和不同JDBC驱动间的抽象层
+**** RowSet
++ RowSet用于存储查询的数据结果，其继承自ResultSet
++ RowSet对象默认是可滚动，可更新的
++ 提供了Java Bean的功能，可以通过setter和getter来设置和获取属性，其使用了事件驱动模型，可以给注册的组件发送通知
++ 它是离线的，更轻量级，更易于在网络间传输
 *** Java查询语句
 + Statement：用于通用查询
 + PreparedStatement: 用于执行参数化查询
@@ -1060,6 +1092,34 @@ for (int j = 0; j < src.length; j++) {
 + 不是所有数据库都支持存储过程
 + 无法享受PreparedStatement缓存带来的好处
 *** 数据库连接池
+**** 优点
++ 节省创建连接，释放连接资源
+**** 自定义连接池
++ 实现javax.sql.DataSource接口(两个重载的getConnection方法)
++ 用户用完Connection后，不能调用Connection.close方法，而要使用连接池提供的关闭方法
++ 也可以使用动态代理来增强Connection.close分法
+
+#+BEGIN_SRC java
+  @Override
+  public Connection getConnection() throws SQLException {
+      final Connection conn = dataSource.removeFirst();
+      Connection connProxy = (Connection) Proxy.newProxyInstance(
+                                                                 conn.getClass().getClassLoader(),
+                                                                 conn.getClass().getInterfaces(),
+                                                                 new InvocationHandler() {
+          @Override
+          public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+              if (method.getName().equals("close")) {
+                  releaseConnection(conn);
+                  return null;
+              } else {
+                  return method.invoke(conn, args);
+              }
+          }
+                                                                 });
+      return connProxy;
+  }
+#+END_SRC
 *** DAO模式
 + Data Access Object为数据库或其他持久化机制提供了抽象接口的对象
 + 在不暴露底层持久化方案实现的情况下提供各种数据访问操作
