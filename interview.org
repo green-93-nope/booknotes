@@ -665,7 +665,8 @@ Parallel Scavenge 的老年代版本。
 + HashMap实际上是一个“链表散列”的数据结构，即数组和链表的结合体。HashMap的底层结构是一个数组，数组中的每一项是一条链表。
 + 在1.8中采用了数组+链表+红黑树的结构
   + 当数组的大小超过64,且链表的元素个数超过默认设定(8)时，链表转为红黑树
-+ HashMap的实例有俩个参数影响其性能： “初始容量” 和 装填因子
++ HashMap的实例有俩个参数影响其性能： “初始容量(16)” 和 装填因子(.75)
++ 当HashMap中存有的个数大于容量x装填因子后扩容
 + HashMap实现不同步，线程不安全。  HashTable线程安全
 + HashMap中的key-value都是存储在Entry中的。
 + HashMap可以存null键和null值，不保证元素的顺序恒久不变，它的底层使用的是数组和链表，通过hashCode()方法和equals方法保证键的唯一性
@@ -680,7 +681,10 @@ Parallel Scavenge 的老年代版本。
 + Hashtable 中， key 和 value 都不允许出现 null 值。 在 HashMap 中， null 可以作为键，这样的键只有一个；可以有一个或多个键所对应的值为 null 。当 get() 方法返回 null 值时，即可以表示 HashMap 中没有该键，也可以表示该键所对应的值为 null 。因此，在 HashMap 中不能由 get() 方法来判断 HashMap 中是否存在某个键， 而应该用 containsKey() 方法来判断。
 + 两个遍历方式的内部实现上不同。Hashtable、HashMap都使用了Iterator。而由于历史原因，Hashtable还使用了Enumeration的方式 。
 + HashMap 中的 Iterator 是 fail-fast 迭代器，而 HashTable 中的 Enumeration 不是。
-+ 哈希值的使用不同，HashTable直接使用对象的hashCode。而HashMap重新计算hash值。
++ 哈希值的使用不同:
+  + Hashtable(prime): hash = key.hashCode(); index = (hash & 0x7fffffff) % tab.length;
+  + hashmap(power of 2): int h;hash = (key==null)?0:(h=hashCode())^(h>>16);index=(tab.length-1)&hash;
+  + 在hashmap中为了防止除了高位都相同的hash码碰撞，进行了高位和低位间的异或操作
 + Hashtable和HashMap它们两个内部实现方式的数组的初始大小和扩容的方式。HashTable中hash数组默认大小是11，增加的方式是old*2+1。HashMap中hash数组的默认大小是16，而且一定是2的指数。
 + HashMap 不能保证随着时间的推移Map中的元素次序是不变的。(hashtable应该同样是？)
 
